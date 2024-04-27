@@ -1,0 +1,98 @@
+import piplite
+await piplite.install(['numpy'],['pandas'])
+await piplite.install(['seaborn'])
+import pandas as pd
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from scipy import stats
+import statsmodels.api as sm
+from statsmodels.formula.api import ols
+from js import fetch
+import io
+
+URL = 'https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud/IBMDeveloperSkillsNetwork-ST0151EN-SkillsNetwork/labs/boston_housing.csv'
+resp = await fetch(URL)
+boston_url = io.BytesIO((await resp.arrayBuffer()).to_py())
+data=pd.read_csv(boston_url)
+plt.figure(figsize=(8, 6))
+plt.boxplot(data['MEDV'])
+plt.title('Boxplot of Median value of owner-occupied homes (MEDV)')
+plt.ylabel('Median value of owner-occupied homes ($1000s)')
+plt.show()
+
+# Task 2: Bar plot for the Charles river variable (CHAS)
+plt.figure(figsize=(6, 4))
+data['CHAS'].value_counts().plot(kind='bar')
+plt.title('Bar Plot of Charles River Proximity')
+plt.xlabel('Charles River Proximity (0: Not bounded, 1: Bounded)')
+plt.ylabel('Count')
+plt.show()
+
+# Task 3: Boxplot for MEDV vs AGE (Discretized into three groups)
+data['AGE_Group'] = pd.cut(data['AGE'], bins=[0, 35, 70, float('inf')], labels=['35 years and younger', 'Between 35 and 70 years', '70 years and older'])
+plt.figure(figsize=(8, 6))
+data.boxplot(column='MEDV', by='AGE_Group')
+plt.title('Boxplot of Median value of owner-occupied homes (MEDV) by Age Group')
+plt.xlabel('Age Group')
+plt.ylabel('Median value of owner-occupied homes ($1000s)')
+plt.xticks(rotation=45)
+plt.show()
+
+# Task 4: Scatter plot for NOX vs INDUS
+plt.figure(figsize=(8, 6))
+plt.scatter(data['NOX'], data['INDUS'], alpha=0.5)
+plt.title('Scatter Plot of Nitric Oxide Concentration vs Proportion of Non-Retail Business Acres')
+plt.xlabel('Nitric Oxide Concentration (parts per 10 million)')
+plt.ylabel('Proportion of Non-Retail Business Acres per Town')
+plt.show()
+
+# Task 5: Histogram for pupil to teacher ratio (PTRATIO)
+plt.figure(figsize=(8, 6))
+plt.hist(data['PTRATIO'], bins=20, color='skyblue', edgecolor='black')
+plt.title('Histogram of Pupil to Teacher Ratio (PTRATIO)')
+plt.xlabel('Pupil to Teacher Ratio')
+plt.ylabel('Frequency')
+plt.show()
+
+# Additional questions:
+
+# Is there a significant difference in median value of houses bounded by the Charles river or not? (T-test for independent samples)
+medv_bounded = data[data['CHAS'] == 1]['MEDV']
+medv_not_bounded = data[data['CHAS'] == 0]['MEDV']
+t_stat, p_value = stats.ttest_ind(medv_bounded, medv_not_bounded)
+print("\nT-test Results:")
+print("T-statistic:", t_stat)
+print("P-value:", p_value)
+if p_value < 0.05:
+    print("Conclusion: Reject the null hypothesis. There is a significant difference in median value of houses bounded by the Charles river.")
+else:
+    print("Conclusion: Fail to reject the null hypothesis. There is no significant difference in median value of houses bounded by the Charles river.")
+
+# Is there a difference in Median values of houses (MEDV) for each proportion of owner occupied units built prior to 1940 (AGE)? (ANOVA)
+age_groups = data.groupby('AGE_Group')['MEDV'].apply(list)
+f_stat, p_value = stats.f_oneway(*age_groups)
+print("\nANOVA Results:")
+print("F-statistic:", f_stat)
+print("P-value:", p_value)
+if p_value < 0.05:
+    print("Conclusion: Reject the null hypothesis. There is a significant difference in median values of houses for each proportion of owner occupied units built prior to 1940.")
+else:
+    print("Conclusion: Fail to reject the null hypothesis. There is no significant difference in median values of houses for each proportion of owner occupied units built prior to 1940.")
+
+# Can we conclude that there is no relationship between Nitric oxide concentrations and proportion of non-retail business acres per town? (Pearson Correlation)
+pearson_corr, p_value = stats.pearsonr(data['NOX'], data['INDUS'])
+print("\nPearson Correlation Results:")
+print("Pearson correlation coefficient:", pearson_corr)
+print("P-value:", p_value)
+if abs(pearson_corr) < 0.05:
+    print("Conclusion: Fail to reject the null hypothesis. There is no significant relationship between Nitric oxide concentrations and proportion of non-retail business acres per town.")
+else:
+    print("Conclusion: Reject the null hypothesis. There is a significant relationship between Nitric oxide concentrations and proportion of non-retail business acres per town.")
+
+# What is the impact of an additional weighted distance to the five Boston employment centres on the median value of owner occupied homes? (Regression analysis)
+X = sm.add_constant(data['DIS'])
+y = data['MEDV']
+model = sm.OLS(y, X).fit()
+print("\nRegression Analysis Results:")
+print(model.summary())
