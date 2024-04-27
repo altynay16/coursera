@@ -1,0 +1,59 @@
+import piplite
+await piplite.install(['numpy'],['pandas'])
+await piplite.install(['seaborn'])
+import pandas as pd
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import scipy.stats
+import statsmodels.api as sm
+from statsmodels.formula.api import ols
+from js import fetch
+import io
+
+URL = 'https://cf-courses-data.s3.us.cloud-object-storage.appdomain.cloud/IBMDeveloperSkillsNetwork-ST0151EN-SkillsNetwork/labs/boston_housing.csv'
+resp = await fetch(URL)
+boston_url = io.BytesIO((await resp.arrayBuffer()).to_py())
+data=pd.read_csv(boston_url)
+#%%
+plt.figure(figsize=(8, 6))
+sns.boxplot(y='MEDV', data=data)
+plt.title('Boxplot of Median value of owner-occupied homes (MEDV)')
+plt.ylabel('Median value of owner-occupied homes ($1000s)')
+plt.show()
+
+# Bar plot for the Charles river variable
+plt.figure(figsize=(6, 4))
+sns.countplot(x='CHAS', data=data)
+plt.title('Bar Plot of Charles River Proximity')
+plt.xlabel('Charles River Proximity (0: Not bounded, 1: Bounded)')
+plt.ylabel('Count')
+plt.show()
+
+# Boxplot for MEDV vs AGE
+# Discretize the AGE variable into three groups
+data['AGE_Group'] = pd.cut(data['AGE'], bins=[0, 35, 70, float('inf')], labels=['35 years and younger', 'Between 35 and 70 years', '70 years and older'])
+
+plt.figure(figsize=(8, 6))
+sns.boxplot(x='AGE_Group', y='MEDV', data=data)
+plt.title('Boxplot of Median value of owner-occupied homes (MEDV) by Age Group')
+plt.xlabel('Age Group')
+plt.ylabel('Median value of owner-occupied homes ($1000s)')
+plt.xticks(rotation=45)
+plt.show()
+
+# Scatter plot for NOX vs INDUS
+plt.figure(figsize=(8, 6))
+sns.scatterplot(x='NOX', y='INDUS', data=data)
+plt.title('Scatter Plot of Nitric Oxide Concentration vs Proportion of Non-Retail Business Acres')
+plt.xlabel('Nitric Oxide Concentration (parts per 10 million)')
+plt.ylabel('Proportion of Non-Retail Business Acres per Town')
+plt.show()
+
+# Histogram for pupil to teacher ratio (PTRATIO)
+plt.figure(figsize=(8, 6))
+plt.hist(data['PTRATIO'], bins=20, color='skyblue', edgecolor='black')
+plt.title('Histogram of Pupil to Teacher Ratio (PTRATIO)')
+plt.xlabel('Pupil to Teacher Ratio')
+plt.ylabel('Frequency')
+plt.show()
